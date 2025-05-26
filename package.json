@@ -1,0 +1,31 @@
+{
+  "name": "deploy-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "deploy-cli": "./bin/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node bin/index.js build --trace-warnings"
+  },
+  "type": "module",
+  "keywords": [
+    "deploy",
+    "cli"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^14.0.0",
+    "fs-extra": "^11.3.0",
+    "ssh2": "^1.16.0",
+    "vite": "^6.3.5"
+  },
+  "devDependencies": {
+    "chalk": "^5.4.1",
+    "fs-walk": "^0.0.2",
+    "inquirer": "^12.6.3"
+  }
+}
