@@ -2,7 +2,7 @@
  * @Author: Oliver
  * @Date: 2025-05-26 17:12:31
  * @LastEditors: Oliver
- * @LastEditTime: 2025-05-27 10:55:15
+ * @LastEditTime: 2025-05-27 11:28:38
  * @FilePath: /cli/i18n.js
  */
 export default (() => ({
@@ -63,21 +63,5 @@ export default (() => ({
   "Upload file": {
     zhCn: "上传文件",
     enUs: "Upload file"
-  },
-
-  enUs: {
-    "Please enter the server address": "请输入服务器地址",
-    "Please enter the server port": "请输入服务器端口",
-    "Please enter the server username": "请输入服务器用户名",
-    "Please enter the server deployment path": "请输入服务器部署路径",
-    "Please enter the local project path": "请输入本地项目路径",
-    "Please enter the ssh key path": "请输入密钥路径",
-    "Deployment successful": "部署成功",
-    "Deployment failed": "部署失败",
-    "Upload failed": "上传失败",
-    "Upload successful": "上传成功",
-    "All files uploaded successfully": "所有文件上传成功",
-    "Connection successful": "连接成功",
-    "Connection failed": "连接失败"
   }
 }))();
