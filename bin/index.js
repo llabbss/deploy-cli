@@ -3,7 +3,7 @@
  * @Author: Oliver
  * @Date: 2025-05-23 11:11:06
  * @LastEditors: Oliver
- * @LastEditTime: 2025-05-27 10:17:25
+ * @LastEditTime: 2025-05-27 10:59:08
  * @FilePath: /cli/bin/index.js
  */
 import fs from "fs-extra";
@@ -11,12 +11,24 @@ import inquire from "inquirer";
 import path from "path";
 import ssh from "ssh2";
 import chalk from "chalk";
-import lang from "../i18n.json" assert { type: "json" };
-import deployConfig from "../vite-deploy.config.json" assert { type: "json" };
+import { Command } from "commander";
+import lang from "../i18n.js";
+import deployConfig from "../vite-deploy.config.js";
 
+const { default: packageJson } = await import("../package.json", {
+  assert: { type: "json" }
+});
 const { server, user, port, dist, remotePath, key } = deployConfig;
 const Client = ssh.Client;
 const CWD = process.cwd();
+const program = new Command();
+
+program
+  .name("deploy-cli")
+  .version(packageJson.version)
+  .option("-v, --v", "查看版本号")
+  .parse();
+
 const translate = (string, language) => {
   if (lang[string][language]) {
     return lang[string][language];
@@ -125,7 +137,7 @@ inquire
       ])
       .then(answers => {
         try {
-          deploy(answers);
+          // deploy(answers);
           console.log(
             chalk.green.bold(`${translate("Deployment successful", language)}!`)
           );
