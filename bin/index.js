@@ -3,7 +3,7 @@
  * @Author: Oliver
  * @Date: 2025-05-23 11:11:06
  * @LastEditors: Oliver
- * @LastEditTime: 2025-05-26 16:53:49
+ * @LastEditTime: 2025-05-27 09:50:54
  * @FilePath: /cli/bin/index.js
  */
 import fs from "fs-extra";
@@ -11,91 +11,132 @@ import inquire from "inquirer";
 import path from "path";
 import ssh from "ssh2";
 import chalk from "chalk";
-
+import lang from "../i18n.json" assert { type: "json" };
+import deployConfig from "../vite-deploy.config.json" assert { type: "json" };
+console.log(deployConfig, "--deployConfig");
+const { server, user, port, dist, remotePath, key } = deployConfig;
 const Client = ssh.Client;
 const CWD = process.cwd();
+const translate = (string, language) => {
+  if (lang[string][language]) {
+    return lang[string][language];
+  }
+  console.log(string, "---string");
+};
+let curLanguage = null;
 inquire
   .prompt([
     {
-      type: "input",
-      name: "server",
-      message: "请输入服务器地址",
-      validate: value => {
-        if (!value) {
-          return "请输入服务器地址";
-        }
-        return true;
-      }
-    },
-    {
-      type: "input",
-      name: "port",
-      default: 22,
-      message: "请输入服务器端口",
-      validate: value => {
-        if (!value) {
-          return "请输入服务器端口";
-        }
-        return true;
-      }
-    },
-    {
-      type: "input",
-      name: "user",
-      message: "请输入服务器用户名",
-      validate: value => {
-        if (!value) {
-          return "请输入服务器用户名";
-        }
-        return true;
-      }
-    },
-    {
-      type: "input",
-      name: "remotePath",
-      message: "请输入服务器部署路径",
-      default: "/var/www/html",
-      validate: value => {
-        if (!value) {
-          return "请输入服务器部署路径";
-        }
-        return true;
-      }
-    },
-    {
-      type: "input",
-      name: "dist",
-      message: "请输入本地项目路径",
-      default: "./dist",
-      validate: value => {
-        if (!value) {
-          return "请输入本地项目路径";
-        }
-        return true;
-      }
-    },
-    {
-      type: "input",
-      name: "key",
-      message: "请输入密钥路径",
-      validate: value => {
-        if (!value) {
-          return "请输入密钥路径";
-        }
-        return true;
-      }
+      type: "list",
+      name: "language",
+      message: "请选择语言",
+      choices: [
+        {
+          value: "zhCn",
+          name: "中文"
+        },
+        { name: "English", value: "enUs" }
+      ]
     }
   ])
-  .then(async answers => {
-    try {
-      await deploy(answers);
-      console.log(chalk.green.bold("部署成功!"));
-    } catch (e) {
-      console.log(chalk.red.bold("部署失败!"));
-      console.error("部署失败:", error.message);
-    }
+  .then(async ({ language }) => {
+    curLanguage = language;
+    inquire
+      .prompt([
+        {
+          type: "input",
+          name: "server",
+          message: translate("Please enter the server address", language),
+          default: server || null,
+          validate: value => {
+            if (!value) {
+              return translate("Please enter the server address", language);
+            }
+            return true;
+          }
+        },
+        {
+          type: "input",
+          name: "port",
+          default: 22,
+          default: port || null,
+          message: translate("Please enter the server port", language),
+          validate: value => {
+            if (!value) {
+              return translate("Please enter the server port", language);
+            }
+            return true;
+          }
+        },
+        {
+          type: "input",
+          name: "user",
+          message: translate("Please enter the server username", language),
+          default: user || null,
+          validate: value => {
+            if (!value) {
+              return translate("Please enter the server username", language);
+            }
+            return true;
+          }
+        },
+        {
+          type: "input",
+          name: "remotePath",
+          message: translate(
+            "Please enter the server deployment path",
+            language
+          ),
+          default: remotePath || "/var/www/html",
+          validate: value => {
+            if (!value) {
+              return translate(
+                "Please enter the server deployment path",
+                language
+              );
+            }
+            return true;
+          }
+        },
+        {
+          type: "input",
+          name: "dist",
+          default: dist || "",
+          message: translate("Please enter the local project path", language),
+          default: "./dist",
+          validate: value => {
+            if (!value) {
+              return translate("Please enter the local project path", language);
+            }
+            return true;
+          }
+        },
+        {
+          type: "input",
+          name: "key",
+          default: key || "",
+          message: translate("Please enter the ssh key path", language),
+          validate: value => {
+            if (!value) {
+              return translate("Please enter the ssh key path", language);
+            }
+            return true;
+          }
+        }
+      ])
+      .then(answers => {
+        try {
+          deploy(answers);
+          console.log(
+            chalk.green.bold(`${translate("Deployment successful", language)}!`)
+          );
+        } catch (e) {
+          console.error(
+            chalk.red.bold(`${translate("Deployment failed", language)}！`)
+          );
+        }
+      });
   });
-
 async function uploadDirectory(sftp, localPath, remotePath, isRoot = true) {
   // 只在最外层加 dist
   const targetRemotePath = isRoot
@@ -114,14 +155,30 @@ async function uploadDirectory(sftp, localPath, remotePath, isRoot = true) {
     if (entry.isDirectory()) {
       await uploadDirectory(sftp, localEntryPath, remoteEntryPath, false);
     } else {
-      console.log(chalk.green(`上传文件: ${remoteEntryPath}`));
+      console.log(
+        chalk.green(
+          `${translate("Upload file", curLanguage)}: ${remoteEntryPath}`
+        )
+      );
       await new Promise((resolve, reject) => {
         sftp.fastPut(localEntryPath, remoteEntryPath, err => {
           if (err) {
-            console.error(chalk.red(`${remoteEntryPath}上传失败:`, err));
+            console.error(
+              chalk.red(
+                `${remoteEntryPath}${translate("Upload failed", curLanguage)}:`,
+                err
+              )
+            );
             reject(err);
           } else {
-            console.log(chalk.green(`${remoteEntryPath}上传成功`));
+            console.log(
+              chalk.green(
+                `${remoteEntryPath}${translate(
+                  "Upload successful",
+                  curLanguage
+                )}`
+              )
+            );
             resolve();
           }
         });
@@ -149,23 +206,38 @@ function deploy(options) {
             reject(err);
             return;
           }
-          console.log("SFTP 连接成功");
+          console.log(`SFTP 连接成功`);
+          console.log(
+            `SFTP ${translate("Connection successful", curLanguage)}`
+          );
           // 开始上传
           uploadDirectory(sftp, path.join(CWD, dist), remotePath)
             .then(() => {
-              console.log("所有文件上传成功");
+              console.log(
+                `SFTP ${translate(
+                  "All files uploaded successfully",
+                  curLanguage
+                )}`
+              );
               conn.end();
               resolve();
             })
             .catch(err => {
-              console.error("上传失败:", err);
+              console.error(chalk.red("上传失败") + ":", err);
+              console.error(
+                chalk.red(`SFTP ${translate("Upload failed", curLanguage)}`),
+                err
+              );
               conn.end();
               reject(err);
             });
         });
       })
       .on("error", err => {
-        console.error("连接失败:", err);
+        console.error(
+          chalk.red(translate("Connection failed", curLanguage)) + ":",
+          err
+        );
         reject(err);
       })
       .connect({
