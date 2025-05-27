@@ -2,7 +2,7 @@
  * @Author: Oliver
  * @Date: 2025-05-26 17:10:42
  * @LastEditors: Oliver
- * @LastEditTime: 2025-05-27 11:03:44
+ * @LastEditTime: 2025-05-27 11:05:04
  * @FilePath: /cli/readMe.md
 -->
 ### For uploading files to the server by using sftp
@@ -11,7 +11,7 @@
 
 ```shell
 $ git clone git@github.com:llabbss/deploy-cli.git
-$ cd ${projectPath}
+$ cd deploy-cli
 $ npm install -g .
 
 Usage: deploy-cli
