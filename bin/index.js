@@ -3,7 +3,7 @@
  * @Author: Oliver
  * @Date: 2025-05-23 11:11:06
  * @LastEditors: Oliver
- * @LastEditTime: 2025-05-27 09:50:54
+ * @LastEditTime: 2025-05-27 10:17:25
  * @FilePath: /cli/bin/index.js
  */
 import fs from "fs-extra";
@@ -13,7 +13,7 @@ import ssh from "ssh2";
 import chalk from "chalk";
 import lang from "../i18n.json" assert { type: "json" };
 import deployConfig from "../vite-deploy.config.json" assert { type: "json" };
-console.log(deployConfig, "--deployConfig");
+
 const { server, user, port, dist, remotePath, key } = deployConfig;
 const Client = ssh.Client;
 const CWD = process.cwd();
@@ -21,7 +21,6 @@ const translate = (string, language) => {
   if (lang[string][language]) {
     return lang[string][language];
   }
-  console.log(string, "---string");
 };
 let curLanguage = null;
 inquire
@@ -206,7 +205,6 @@ function deploy(options) {
             reject(err);
             return;
           }
-          console.log(`SFTP 连接成功`);
           console.log(
             `SFTP ${translate("Connection successful", curLanguage)}`
           );
@@ -223,7 +221,6 @@ function deploy(options) {
               resolve();
             })
             .catch(err => {
-              console.error(chalk.red("上传失败") + ":", err);
               console.error(
                 chalk.red(`SFTP ${translate("Upload failed", curLanguage)}`),
                 err
