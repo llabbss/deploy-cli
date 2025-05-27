@@ -12,6 +12,7 @@
 ```shell
 $ cd ${projectPath}
 $ npm install -g .
+
 Usage: deploy-cli
 
 Options:
