@@ -3,7 +3,7 @@
  * @Author: Oliver
  * @Date: 2025-05-23 11:11:06
  * @LastEditors: Oliver
- * @LastEditTime: 2025-05-27 10:59:08
+ * @LastEditTime: 2025-05-27 11:25:08
  * @FilePath: /cli/bin/index.js
  */
 import fs from "fs-extra";
@@ -23,131 +23,162 @@ const Client = ssh.Client;
 const CWD = process.cwd();
 const program = new Command();
 
+// 支持的语言列表
+const SUPPORTED_LANGUAGES = {
+  zhCn: "中文",
+  enUs: "English"
+};
+
+// 获取当前语言
+const getCurrentLanguage = () => {
+  const options = program.opts();
+  return options.language || "zhCn"; // 默认使用中文
+};
+
+// 翻译函数
+const translate = (string, language = getCurrentLanguage()) => {
+  if (lang[string] && lang[string][language]) {
+    return lang[string][language];
+  }
+  return string; // 如果找不到翻译，返回原始字符串
+};
+
 program
   .name("deploy-cli")
   .version(packageJson.version)
   .option("-v, --v", "查看版本号")
-  .parse();
+  .option("-l, --language <language>", "选择语言 (zhCn/enUs)")
+  .action(async () => {
+    const options = program.opts();
+    if (options.v) {
+      console.log(
+        chalk.green(`当前版本(current version)：${packageJson.version}`)
+      );
+      process.exit(0);
+    }
+    if (options.language) {
+      if (!SUPPORTED_LANGUAGES[options.language]) {
+        console.log(chalk.red("语言不支持(language not supported)"));
+        process.exit(0);
+      }
+    }
+  });
+program.parse();
+// 如果没有通过命令行指定语言，则显示语言选择提示
+const startDeploy = async () => {
+  let curLanguage = getCurrentLanguage();
 
-const translate = (string, language) => {
-  if (lang[string][language]) {
-    return lang[string][language];
+  if (!program.opts().language) {
+    const { language } = await inquire.prompt([
+      {
+        type: "list",
+        name: "language",
+        message: "请选择语言 / Please select language",
+        choices: Object.entries(SUPPORTED_LANGUAGES).map(([value, name]) => ({
+          value,
+          name
+        }))
+      }
+    ]);
+    curLanguage = language;
+  }
+
+  // 继续部署流程
+  const answers = await inquire.prompt([
+    {
+      type: "input",
+      name: "server",
+      message: translate("Please enter the server address", curLanguage),
+      default: server || null,
+      validate: value => {
+        if (!value) {
+          return translate("Please enter the server address", curLanguage);
+        }
+        return true;
+      }
+    },
+    {
+      type: "input",
+      name: "port",
+      default: 22,
+      default: port || null,
+      message: translate("Please enter the server port", curLanguage),
+      validate: value => {
+        if (!value) {
+          return translate("Please enter the server port", curLanguage);
+        }
+        return true;
+      }
+    },
+    {
+      type: "input",
+      name: "user",
+      message: translate("Please enter the server username", curLanguage),
+      default: user || null,
+      validate: value => {
+        if (!value) {
+          return translate("Please enter the server username", curLanguage);
+        }
+        return true;
+      }
+    },
+    {
+      type: "input",
+      name: "remotePath",
+      message: translate(
+        "Please enter the server deployment path",
+        curLanguage
+      ),
+      default: remotePath || "/var/www/html",
+      validate: value => {
+        if (!value) {
+          return translate(
+            "Please enter the server deployment path",
+            curLanguage
+          );
+        }
+        return true;
+      }
+    },
+    {
+      type: "input",
+      name: "dist",
+      default: dist || "",
+      message: translate("Please enter the local project path", curLanguage),
+      default: "./dist",
+      validate: value => {
+        if (!value) {
+          return translate("Please enter the local project path", curLanguage);
+        }
+        return true;
+      }
+    },
+    {
+      type: "input",
+      name: "key",
+      default: key || "",
+      message: translate("Please enter the ssh key path", curLanguage),
+      validate: value => {
+        if (!value) {
+          return translate("Please enter the ssh key path", curLanguage);
+        }
+        return true;
+      }
+    }
+  ]);
+
+  try {
+    deploy(answers);
+    console.log(
+      chalk.green.bold(`${translate("Deployment successful", curLanguage)}!`)
+    );
+  } catch (e) {
+    console.error(
+      chalk.red.bold(`${translate("Deployment failed", curLanguage)}！`)
+    );
   }
 };
-let curLanguage = null;
-inquire
-  .prompt([
-    {
-      type: "list",
-      name: "language",
-      message: "请选择语言",
-      choices: [
-        {
-          value: "zhCn",
-          name: "中文"
-        },
-        { name: "English", value: "enUs" }
-      ]
-    }
-  ])
-  .then(async ({ language }) => {
-    curLanguage = language;
-    inquire
-      .prompt([
-        {
-          type: "input",
-          name: "server",
-          message: translate("Please enter the server address", language),
-          default: server || null,
-          validate: value => {
-            if (!value) {
-              return translate("Please enter the server address", language);
-            }
-            return true;
-          }
-        },
-        {
-          type: "input",
-          name: "port",
-          default: 22,
-          default: port || null,
-          message: translate("Please enter the server port", language),
-          validate: value => {
-            if (!value) {
-              return translate("Please enter the server port", language);
-            }
-            return true;
-          }
-        },
-        {
-          type: "input",
-          name: "user",
-          message: translate("Please enter the server username", language),
-          default: user || null,
-          validate: value => {
-            if (!value) {
-              return translate("Please enter the server username", language);
-            }
-            return true;
-          }
-        },
-        {
-          type: "input",
-          name: "remotePath",
-          message: translate(
-            "Please enter the server deployment path",
-            language
-          ),
-          default: remotePath || "/var/www/html",
-          validate: value => {
-            if (!value) {
-              return translate(
-                "Please enter the server deployment path",
-                language
-              );
-            }
-            return true;
-          }
-        },
-        {
-          type: "input",
-          name: "dist",
-          default: dist || "",
-          message: translate("Please enter the local project path", language),
-          default: "./dist",
-          validate: value => {
-            if (!value) {
-              return translate("Please enter the local project path", language);
-            }
-            return true;
-          }
-        },
-        {
-          type: "input",
-          name: "key",
-          default: key || "",
-          message: translate("Please enter the ssh key path", language),
-          validate: value => {
-            if (!value) {
-              return translate("Please enter the ssh key path", language);
-            }
-            return true;
-          }
-        }
-      ])
-      .then(answers => {
-        try {
-          // deploy(answers);
-          console.log(
-            chalk.green.bold(`${translate("Deployment successful", language)}!`)
-          );
-        } catch (e) {
-          console.error(
-            chalk.red.bold(`${translate("Deployment failed", language)}！`)
-          );
-        }
-      });
-  });
+
 async function uploadDirectory(sftp, localPath, remotePath, isRoot = true) {
   // 只在最外层加 dist
   const targetRemotePath = isRoot
@@ -257,3 +288,5 @@ function deploy(options) {
       });
   });
 }
+
+startDeploy();
