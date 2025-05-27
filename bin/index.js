@@ -3,7 +3,7 @@
  * @Author: Oliver
  * @Date: 2025-05-23 11:11:06
  * @LastEditors: Oliver
- * @LastEditTime: 2025-05-27 11:25:08
+ * @LastEditTime: 2025-05-27 11:38:02
  * @FilePath: /cli/bin/index.js
  */
 import fs from "fs-extra";
@@ -13,7 +13,7 @@ import ssh from "ssh2";
 import chalk from "chalk";
 import { Command } from "commander";
 import lang from "../i18n.js";
-import deployConfig from "../vite-deploy.config.js";
+import deployConfig from "../deploy.config.js";
 
 const { default: packageJson } = await import("../package.json", {
   assert: { type: "json" }
